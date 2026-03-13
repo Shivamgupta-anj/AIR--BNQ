@@ -66,19 +66,19 @@ app.use((req,res,next)=>{
 
 })
 
-app.get(
-  "/demouser", async (req,res)=>{
-    let fakeuser = new User ({
-      email : "abc@123.com",
-      username: "abc",
-    });
-    let registeredUser=await User.register(fakeuser,"shivam");
-    res.send(registeredUser);
+// app.get(
+//   "/demouser", async (req,res)=>{
+//     let fakeuser = new User ({
+//       email : "abc@123.com",
+//       username: "abc",
+//     });
+//     let registeredUser=await User.register(fakeuser,"shivam");
+//     res.send(registeredUser);
 
-  }
+//   }
   
 
-)
+// )
 
 app.use("/listings", listingRouter);
 app.use("/listings/:id/reviews", reviewRouter); //parent route is /listings/:id, so we can access the id in the review routes as well  
