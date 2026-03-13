@@ -11,9 +11,14 @@ const { listingSchema,reviewSchema } = require("./schema.js");
 const Review = require("./models/review.js");
 const session = require("express-session");
 const flash = require ("connect-flash");
+const passport = require("passport");
+const LocalStrategy = require("passport-local");
+const User = require("./models/user.js");
 
-const listings = require("./routes/listing.js");
-const reviews = require("./routes/review.js");
+const listingRouter = require("./routes/listing.js");
+const reviewRouter = require("./routes/review.js");
+const userRouter = require("./routes/user.js");
+
 
 async function main() {
   await mongoose.connect("mongodb://127.0.0.1:27017/wanderlust");
@@ -45,6 +50,15 @@ app.get("/",(req,res)=>{
 app.use(session(sessionOptions));
 app.use(flash())
 
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new LocalStrategy(User.authenticate())); //authenticate method is provided by passport-local-mongoose, it is used to authenticate the user
+
+// serializeUser user related data ko session me store karta hai, 
+passport.serializeUser(User.serializeUser()); //serializeUser and deserializeUser are used to store the user in the session and to retrieve the user from the session, they are provided by passport-local-mongoose
+// deserializeUser session me stored data ko user object me convert karta hai, dono methods passport-local-mongoose ke dwara provide kiye gaye hain
+passport.deserializeUser(User.deserializeUser());
+
 app.use((req,res,next)=>{
   res.locals.success=req.flash("success");
   res.locals.error = req.flash("error");
@@ -52,8 +66,24 @@ app.use((req,res,next)=>{
 
 })
 
-app.use("/listings", listings);
-app.use("/listings/:id/reviews", reviews); //parent route is /listings/:id, so we can access the id in the review routes as well  
+app.get(
+  "/demouser", async (req,res)=>{
+    let fakeuser = new User ({
+      email : "abc@123.com",
+      username: "abc",
+    });
+    let registeredUser=await User.register(fakeuser,"shivam");
+    res.send(registeredUser);
+
+  }
+  
+
+)
+
+app.use("/listings", listingRouter);
+app.use("/listings/:id/reviews", reviewRouter); //parent route is /listings/:id, so we can access the id in the review routes as well  
+app.use("/", userRouter);
+
 
 main()
   .then(() => console.log("connected to mongodb"))
@@ -66,6 +96,7 @@ main()
 
 
 // ERROR HANDLER
+
 app.all(/.*/, (req, res, next) => {
   next(new ExpressError(404, "Page Not Found"));
 });
