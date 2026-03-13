@@ -41,13 +41,21 @@ router.post("/", validateListing, wrapAsync(async (req, res) => {
 router.get("/:id",wrapAsync( async (req, res) => {
   const { id } = req.params;
   const listing = await Listing.findById(id).populate("reviews");
+  if(!listing) {
+    req.flash("error", "Listing not found");
+    return res.redirect("/listings");
+  }
   res.render("listings/show", { listing });
 }));
 
 // EDIT
 router.get("/:id/edit", wrapAsync(async (req, res) => {
-  const { id } = req.params;
+  let { id } = req.params;
   const listing = await Listing.findById(id);
+  if(!listing) {
+    req.flash("error", "Listing not found");
+    return res.redirect("/listings");
+  }
   res.render("listings/edit", { listing });
 }));
 
@@ -60,14 +68,17 @@ router.put("/:id",validateListing, wrapAsync(async (req, res) => {
   } 
   const { id } = req.params;
   await Listing.findByIdAndUpdate(id, req.body.listing);
+  req.flash("success", "Listing updated successfully");
   res.redirect(`/listings/${id}`);
 }));
 
 // DELETE
 router.delete("/:id", wrapAsync(async (req, res) => {
-  const { id } = req.params;
+  let { id } = req.params;
   await Listing.findByIdAndDelete(id);
+  req.flash("success", "Listing deleted successfully");
   res.redirect("/listings");
 }));
+
 
 module.exports = router;
