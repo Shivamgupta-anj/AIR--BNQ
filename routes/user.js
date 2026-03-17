@@ -4,73 +4,31 @@ const User=require("../models/user.js");
 const wrapAsync = require("../utils/wrapAsync.js");
 const passport = require("passport");
 const { saveRedirectUrl } = require("../middleware.js");
-router.get("/signup",(req,res)=>{
-    res.render("users/signup");
-})
 
-// router.post ("/signup",wrapAsync(async(req,res)=>{
-//     try{
-//         let {username,email,password} = req.body;
-//         const newUser = new User ({email,username});
-//         const registeredUser = await User.register(newUser,password);
-//         console.log(registeredUser);
-//         req.login(registeredUser,(err)=>{
-//             if(err){
-//                 return next(err);
-//             }   
-//         req.flash("success","Welcome to WonderLust");
-//         res.redirect("/listings");
+const userController = require("../controllers/users.js");
+// const user = require("../models/user.js");
 
-//         })
-//         
+router
+.route("/signup")
+.get(userController.renderSignupForm)
+.post(wrapAsync(userController.signup))
 
-//     } catch(e){
-//         req.flash("error",e.message);
-//         res.redirect("/signup");
-//     }
-     
-// }));
-
-router.post("/signup", wrapAsync(async (req, res, next) => {
-    try {
-        let { username, email, password } = req.body;
-        const newUser = new User({ email, username });
-        const registeredUser = await User.register(newUser, password);
-        req.login(registeredUser, (err) => {
-            if (err) {
-                return next(err);
-            }
-            req.flash("success", "Welcome to WanderLust");
-            res.redirect("/listings");
-        });
-
-    } catch (e) {
-        req.flash("error", e.message);
-        res.redirect("/signup");
-    }
-}));
-
-router.get("/login",(req,res)=>{
-    res.render("users/login.ejs");
-})
-
-// failureFlash:true  is used to flash the error message when authentication fails, and failureRedirect:"/login" is used to redirect the user back to the login page if authentication fails.
+router
+.route("/login")
+.get(userController.renderLoginForm) //renderLoginForm is used to render the login form, it is defined in controllers/users.js
+.post(saveRedirectUrl,passport.authenticate("local",{failureRedirect:"/login",failureFlash:true,}),userController.login)
 
 
-router.post("/login",saveRedirectUrl,passport.authenticate("local",{failureRedirect:"/login",failureFlash:true,}),async(req,res)=>{
 
-   req.flash("success","Welcome Back! You have successfully logged in.!!");
-   let redirectUrl = res.locals.redirect || "/listings";
-   res.redirect(redirectUrl);
-})
 
-router.get("/logout",(req,res)=>{
-    req.logout((err)=> {
-        if (err) { return next(err); }
-        req.flash("success","You have successfully logged out.");
-        res.redirect("/listings");
-        // res.redirect(req.session.redirectUrl );// passport direct to the page where user was before login, if there is no page then it will direct to home page
-    });
-});
+// router.get("/signup",userController.renderSignupForm); //renderSignupForm is used to render the signup form, it is defined in controllers/users.js
+
+// router.post("/signup", wrapAsync(userController.signup));
+
+// router.get("/login",userController.renderLoginForm); //renderLoginForm is used to render the login form, it is defined in controllers/users.js
+
+// router.post("/login",saveRedirectUrl,passport.authenticate("local",{failureRedirect:"/login",failureFlash:true,}),userController.login); //passport.authenticate is used to authenticate the user, it is provided by passport, "local" is the strategy we are using, failureRedirect is used to redirect the user back to the login page if authentication fails, and failureFlash is used to flash the error message when authentication fails.
+
+router.get("/logout",userController.logout); //logout is used to log out the user, it is defined in controllers/users.js
 
 module.exports = router;
