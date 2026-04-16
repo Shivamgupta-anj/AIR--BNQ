@@ -12,12 +12,14 @@ const listingSchema = new Schema({
   price: Number,
   location: String,
   image: {
+    // filename: String,
+    // url: {
+    //   type: String,
+    //   default:
+    //     "https://images.unsplash.com/photo-1717538836473-7925f9ea6744?q=80&w=1160&auto=format&fit=crop",
+    // },
+    url : String,
     filename: String,
-    url: {
-      type: String,
-      default:
-        "https://images.unsplash.com/photo-1717538836473-7925f9ea6744?q=80&w=1160&auto=format&fit=crop",
-    },
   },
   country: String,
 

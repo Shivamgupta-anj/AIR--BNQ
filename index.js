@@ -1,3 +1,7 @@
+if(process.env.NODE_ENV !== "production"){
+  require('dotenv').config(); // Load environment variables from .env file in development environment
+}
+
 const express = require("express");
 const app = express();
 const Listing = require("./models/listing.js");
@@ -19,9 +23,9 @@ const listingRouter = require("./routes/listing.js");
 const reviewRouter = require("./routes/review.js");
 const userRouter = require("./routes/user.js");
 
-
+const dbUrl = process.env.ATLASDB_URL
 async function main() {
-  await mongoose.connect("mongodb://127.0.0.1:27017/wanderlust");
+  await mongoose.connect(dbUrl);
 }
 
 app.set("view engine", "ejs");
@@ -43,9 +47,9 @@ const sessionOptions={
   }
 
 };
-app.get("/",(req,res)=>{
-  res.send("This is root route");
-});
+// app.get("/",(req,res)=>{
+//   res.send("This is root route");
+// });
 
 app.use(session(sessionOptions));
 app.use(flash())

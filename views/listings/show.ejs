@@ -1,4 +1,7 @@
 <% layout("layout/boilerplate") %>
+<script>
+  // constmapToken = "<%= process.env.MAP_TOKEN %>";
+</script>
 
 <div class="row mt-3">
   <div class="col-8 offset-3">
@@ -19,7 +22,15 @@
       <p class="card-text"><%= listing.description %><br /></p>
       <p class="card-text"> ₹ <%= listing.price.toLocaleString("en-IN") %></p>
       <p class="card-text"> <%= listing.location %></p>
+      
       <p class="card-text"><%= listing.country %></p>
+      <!-- map -->
+        <!-- <div id="map" style="#map { height: 180px; }" ></div>
+         -->
+
+       
+
+        <!-- map end -->
         
     </div>
   </div>
@@ -48,8 +59,9 @@
 
 
 <div class="col-8 offset-3 mb-3">
-  <hr />
+  
   <% if(currentUser){ %>
+    <hr>
   <h4>Leave a Review</h4>
   <form action="/listings/<%= listing._id %>/reviews" method="POST" novalidate class="needs-validation">
 
@@ -94,11 +106,11 @@
 <% } %>
   
 
-  <p><b> All Reviews</b></p>
-  <!-- <p><%= listing.review %></p> -->
-   <div class="row">
+  <% if(listing.reviews.length>0) {%>
+    
 
-   
+   <div class="row">
+    <p><b> All Reviews</b></p>
       
     <% for(review of listing.reviews){%>
       <div class="card col-5 ms-3 mb-3">
@@ -126,5 +138,20 @@
       <%}  %>
 
   </div>
-
+  <% } %>
   </div>
+
+
+  <!-- map div -->
+  <!-- <div class="col-6 offset-3 mb-3">
+    <h3>Where You'll be</h3>
+    <div id="map">
+
+    </div>
+
+  
+
+  </div> -->
+
+ 
+<!-- <script src="/js/map.js"></script> -->
