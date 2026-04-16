@@ -22,11 +22,21 @@ const User = require("./models/user.js");
 const listingRouter = require("./routes/listing.js");
 const reviewRouter = require("./routes/review.js");
 const userRouter = require("./routes/user.js");
+const dns = require("dns");
 
+
+dns.setServers(["1.1.1.1", "0.0.0.0"]);
+console.log("DB URL:", process.env.ATLASDB_URL);
 const dbUrl = process.env.ATLASDB_URL
 async function main() {
   await mongoose.connect(dbUrl);
 }
+
+// const MONGO_URL = "mongodb://localhost:27017/wonderlust";
+// async function main() {
+//   await mongoose.connect(MONGO_URL);
+// }
+
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
