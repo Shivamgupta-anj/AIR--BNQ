@@ -33,7 +33,8 @@ const dns = require("dns");
 //   await mongoose.connect(dbUrl);
 // }
 
-const MONGO_URL = "mongodb://localhost:27017/wonderlust";
+const MONGO_URL = "mongodb://localhost:27017/WonderHotel"; 
+// mongoose.connect('mongodb://127.0.0.1:27017/test')
 async function main() {
   await mongoose.connect(MONGO_URL);
 }
