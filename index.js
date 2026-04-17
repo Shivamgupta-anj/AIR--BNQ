@@ -25,17 +25,18 @@ const userRouter = require("./routes/user.js");
 const dns = require("dns");
 
 
-dns.setServers(["1.1.1.1", "0.0.0.0"]);
-console.log("DB URL:", process.env.ATLASDB_URL);
-const dbUrl = process.env.ATLASDB_URL
-async function main() {
-  await mongoose.connect(dbUrl);
-}
+// dns.setServers(["1.1.1.1", "0.0.0.0"]);
+// console.log("DB URL:", process.env.ATLASDB_URL);
 
-// const MONGO_URL = "mongodb://localhost:27017/wonderlust";
+// const dbUrl = process.env.ATLASDB_URL
 // async function main() {
-//   await mongoose.connect(MONGO_URL);
+//   await mongoose.connect(dbUrl);
 // }
+
+const MONGO_URL = "mongodb://localhost:27017/wonderlust";
+async function main() {
+  await mongoose.connect(MONGO_URL);
+}
 
 
 app.set("view engine", "ejs");
@@ -129,3 +130,13 @@ app.use((err, req, res, next) => {
 app.listen(8080, () => {
   console.log("server running on port 8080");
 });
+
+// main()
+//   .then(() => {
+//     console.log("connected to mongodb");
+    
+//     app.listen(8080, () => {
+//       console.log("server running on port 8080");
+//     });
+//   })
+//   .catch(err => console.log(err));
