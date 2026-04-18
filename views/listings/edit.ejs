@@ -1,153 +1,518 @@
 <% layout("layout/boilerplate") %>
 
 <style>
-  .edit-card {
-    border-radius: 20px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-    padding: 25px;
-    background: #fff;
+  * { box-sizing: border-box; }
+
+  .edit-page {
+    max-width: 720px;
+    margin: 2.5rem auto;
+    padding: 0 1rem 4rem;
   }
 
-  .form-label {
+  .edit-header {
+    margin-bottom: 2rem;
+  }
+  .edit-header h2 {
+    font-size: 24px;
     font-weight: 600;
+    color: #111;
+    margin: 0 0 4px;
+  }
+  .edit-header p {
+    font-size: 13px;
+    color: #888;
+    margin: 0;
   }
 
-  .preview-img {
+  /* ── Section cards ── */
+  .edit-section {
+    background: #fff;
+    border: 0.5px solid #e5e5e5;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: box-shadow 0.2s;
+  }
+  .edit-section:hover { box-shadow: 0 2px 16px rgba(0,0,0,0.06); }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: #085041;
+    margin-bottom: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  /* ── Field styles ── */
+  .field-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: #777;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .field-input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 0.5px solid #ddd;
     border-radius: 10px;
-    border: 2px solid #eee;
-    padding: 5px;
-    transition: 0.3s;
+    font-size: 14px;
+    color: #111;
+    background: #fafafa;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    font-family: inherit;
+  }
+  .field-input:focus {
+    border-color: #085041;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(8,80,65,0.08);
+  }
+  .field-input.invalid { border-color: #dc3545; }
+  .invalid-msg {
+    font-size: 11px;
+    color: #dc3545;
+    margin-top: 5px;
+    display: none;
+  }
+  .was-validated .field-input:invalid ~ .invalid-msg { display: block; }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field-row-3 { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; }
+  .field-group { margin-bottom: 1rem; }
+  .field-group:last-child { margin-bottom: 0; }
+
+  textarea.field-input { resize: vertical; min-height: 90px; }
+
+  /* ── Current image preview ── */
+  .current-img-wrap {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 1rem;
+  }
+  .current-img {
+    width: 100%;
+    max-width: 260px;
+    height: 160px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 0.5px solid #eee;
+    display: block;
+  }
+  .current-img-badge {
+    position: absolute;
+    top: 8px; left: 8px;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
   }
 
-  .preview-img:hover {
-    transform: scale(1.05);
+  /* ── Upload zone ── */
+  .upload-zone {
+    border: 1.5px dashed #ccc;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+    background: #fafafa;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: #085041;
+    background: #f0faf8;
+  }
+  .upload-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+  .upload-zone-icon { font-size: 28px; margin-bottom: 6px; display: block; }
+  .upload-zone-label { font-size: 13px; font-weight: 500; color: #444; margin-bottom: 3px; }
+  .upload-zone-sub { font-size: 11px; color: #aaa; }
+
+  /* ── New image previews ── */
+  .new-previews {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .new-preview-item {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    aspect-ratio: 1;
+    background: #f0f0f0;
+  }
+  .new-preview-item img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+  .new-preview-remove {
+    position: absolute;
+    top: 3px; right: 3px;
+    width: 18px; height: 18px;
+    background: rgba(0,0,0,0.6);
+    border: none;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1;
+  }
+  .preview-badge {
+    position: absolute;
+    bottom: 3px; left: 3px;
+    background: #085041;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 10px;
   }
 
-  .btn-custom {
-  background: linear-gradient(135deg, #ff4b2b, #ff416c);
-  border: none;
-  padding: 10px 25px;
-  border-radius: 10px;
-  font-weight: 600;
-  color: white;
-  transition: 0.3s;
-}
+  /* ── Category pills ── */
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .cat-pill {
+    border: 0.5px solid #ddd;
+    border-radius: 10px;
+    padding: 10px 6px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 12px;
+    color: #555;
+    font-weight: 500;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+    user-select: none;
+  }
+  .cat-pill:hover { border-color: #085041; background: #f0faf8; }
+  .cat-pill.selected { border-color: #085041; background: #E1F5EE; color: #085041; font-weight: 600; }
+  .cat-pill-icon { font-size: 18px; display: block; margin-bottom: 4px; }
 
-.btn-custom:hover {
-  background: linear-gradient(135deg, #e63e1f, #e2335a);
-  transform: translateY(-2px);
-}
+  /* ── Submit button ── */
+  .submit-btn {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    background: linear-gradient(135deg, #085041 0%, #0F6E56 100%);
+    color: #9FE1CB;
+    box-shadow: 0 4px 14px rgba(8,80,65,0.25);
+    letter-spacing: 0.02em;
+    transition: opacity 0.2s, transform 0.15s;
+    margin-top: 0.5rem;
+  }
+  .submit-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .submit-btn:active { transform: translateY(0); }
+
+  .cancel-link {
+    display: block;
+    text-align: center;
+    margin-top: 12px;
+    font-size: 13px;
+    color: #888;
+    text-decoration: none;
+  }
+  .cancel-link:hover { color: #111; }
+
+  @media(max-width: 600px) {
+    .field-row, .field-row-3 { grid-template-columns: 1fr; }
+    .category-grid { grid-template-columns: repeat(3, 1fr); }
+    .new-previews { grid-template-columns: repeat(3, 1fr); }
+  }
 </style>
 
-<div class="container mt-5">
-  <div class="row">
-    <div class="col-lg-6 col-md-8 col-12 mx-auto">
+<div class="edit-page">
 
-      <div class="edit-card">
-        <h3 class="text-center mb-4">✏️ Edit Your Listing</h3>
+  <div class="edit-header">
+    <a href="/listings/<%= listing._id %>" style="font-size:13px;color:#085041;text-decoration:none;font-weight:500;">
+      ← Back to listing
+    </a>
+    <h2 style="margin-top:10px;">Edit your listing</h2>
+    <p>Update the details below and save your changes.</p>
+  </div>
 
-        <form
-          action="/listings/<%= listing._id %>?_method=PUT"
-          method="POST"
-          class="needs-validation"
-          novalidate
-          enctype="multipart/form-data"
-        >
+  <form
+    action="/listings/<%= listing._id %>?_method=PUT"
+    method="POST"
+    enctype="multipart/form-data"
+    id="editForm"
+    novalidate
+  >
 
-          <!-- Title -->
-          <div class="mb-3">
-            <label class="form-label">Title</label>
-            <input
-              type="text"
-              name="listing[title]"
-              value="<%= listing.title %>"
-              class="form-control"
-              placeholder="Enter title"
-              required
-            >
-            <div class="invalid-feedback">Please Enter Title</div>
-          </div>
+    <!-- ── Basic Info ── -->
+    <div class="edit-section">
+      <div class="section-title">🏠 Basic Info</div>
 
-          <!-- Description -->
-          <div class="mb-3">
-            <label class="form-label">Description</label>
-            <textarea
-              name="listing[description]"
-              class="form-control"
-              rows="3"
-              placeholder="Enter description"
-              required
-            ><%= listing.description %></textarea>
-            <div class="invalid-feedback">Please Enter Description</div>
-          </div>
-
-          <!-- Original Image -->
-          <div class="mb-3 text-center">
-            <label class="form-label d-block">Original Image</label>
-            <img src="<%= originalImageUrl %>" class="preview-img" style="max-width:180px;">
-          </div>
-
-          <!-- Upload Image -->
-          <div class="mb-3">
-            <label class="form-label">Upload New Image</label>
-            <input
-              type="file"
-              name="listing[image][url]"
-              class="form-control"
-            >
-          </div>
-
-          <!-- Price + Country -->
-          <div class="row">
-            <div class="mb-3 col-md-4">
-              <label class="form-label">Price</label>
-              <input
-                type="number"
-                name="listing[price]"
-                value="<%= listing.price %>"
-                class="form-control"
-                placeholder="₹"
-                required
-              >
-              <div class="invalid-feedback">Enter Price</div>
-            </div>
-
-            <div class="mb-3 col-md-8">
-              <label class="form-label">Country</label>
-              <input
-                type="text"
-                name="listing[country]"
-                value="<%= listing.country %>"
-                class="form-control"
-                placeholder="Enter country"
-                required
-              >
-              <div class="invalid-feedback">Enter Your Country</div>
-            </div>
-          </div>
-
-          <!-- Location -->
-          <div class="mb-3">
-            <label class="form-label">Location</label>
-            <input
-              type="text"
-              name="listing[location]"
-              value="<%= listing.location %>"
-              class="form-control"
-              placeholder="Enter location"
-              required
-            >
-            <div class="invalid-feedback">Enter Location</div>
-          </div>
-
-          <!-- Button -->
-          <div class="text-center">
-            <button class="btn btn-custom mt-3">Update Listing</button>
-          </div>
-
-        </form>
+      <div class="field-group">
+        <label class="field-label">Title</label>
+        <input
+          type="text"
+          name="listing[title]"
+          value="<%= listing.title %>"
+          class="field-input"
+          placeholder="Give your place a catchy title"
+          required
+        />
+        <div class="invalid-msg">Please enter a title.</div>
       </div>
 
+      <div class="field-group">
+        <label class="field-label">Description</label>
+        <textarea
+          name="listing[description]"
+          class="field-input"
+          placeholder="Describe what makes your place special…"
+          required
+        ><%= listing.description %></textarea>
+        <div class="invalid-msg">Please enter a description.</div>
+      </div>
     </div>
-  </div>
+
+    <!-- ── Location & Price ── -->
+    <div class="edit-section">
+      <div class="section-title">📍 Location &amp; Price</div>
+
+      <div class="field-row-3 field-group">
+        <div>
+          <label class="field-label">Price / night (₹)</label>
+          <input
+            type="number"
+            name="listing[price]"
+            value="<%= listing.price %>"
+            class="field-input"
+            placeholder="0"
+            min="0"
+            required
+          />
+          <div class="invalid-msg">Enter a price.</div>
+        </div>
+        <div>
+          <label class="field-label">Country</label>
+          <input
+            type="text"
+            name="listing[country]"
+            value="<%= listing.country %>"
+            class="field-input"
+            placeholder="e.g. India"
+            required
+          />
+          <div class="invalid-msg">Enter a country.</div>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Location / City</label>
+        <input
+          type="text"
+          name="listing[location]"
+          value="<%= listing.location %>"
+          class="field-input"
+          placeholder="e.g. Jaipur, Rajasthan"
+          required
+        />
+        <div class="invalid-msg">Enter a location.</div>
+      </div>
+    </div>
+
+    <!-- ── Category ── -->
+    <div class="edit-section">
+      <div class="section-title">🏷️ Category</div>
+      <input type="hidden" name="listing[category]" id="categoryInput" value="<%= listing.category || '' %>" />
+      <div class="category-grid">
+        <% const categories = [
+          { val: 'Beachfront',  icon: '🏖️' },
+          { val: 'Mountain',    icon: '⛰️' },
+          { val: 'City',        icon: '🏙️' },
+          { val: 'Countryside', icon: '🌾' },
+          { val: 'Luxury',      icon: '💎' },
+          { val: 'Camping',     icon: '⛺' },
+          { val: 'Heritage',    icon: '🏯' },
+          { val: 'Treehouse',   icon: '🌳' },
+        ]; %>
+        <% for(let cat of categories) { %>
+          <div
+            class="cat-pill <%= (listing.category === cat.val) ? 'selected' : '' %>"
+            onclick="selectCategory('<%= cat.val %>', this)"
+          >
+            <span class="cat-pill-icon"><%= cat.icon %></span>
+            <%= cat.val %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- ── Images ── -->
+    <div class="edit-section">
+      <div class="section-title">🖼️ Photos</div>
+
+      <!-- Current main image -->
+      <% if(originalImageUrl || (listing.image && listing.image.url)) { %>
+      <p class="field-label" style="margin-bottom:8px;">Current main photo</p>
+      <div class="current-img-wrap">
+        <img
+          src="<%= originalImageUrl || listing.image.url %>"
+          class="current-img"
+          alt="current listing image"
+        />
+        <span class="current-img-badge">CURRENT</span>
+      </div>
+      <% } %>
+
+      <!-- Current extra images (if any) -->
+      <% if(listing.images && listing.images.length > 1) { %>
+      <p class="field-label" style="margin-bottom:8px;margin-top:8px;">Current gallery photos</p>
+      <div class="new-previews" style="margin-top:0;margin-bottom:12px;">
+        <% for(let img of listing.images.slice(1)) { %>
+        <div class="new-preview-item">
+          <img src="<%= img.url %>" alt="gallery photo" />
+        </div>
+        <% } %>
+      </div>
+      <% } %>
+
+      <!-- Upload new images -->
+      <p class="field-label" style="margin-bottom:8px;">
+        Upload new photos
+        <span style="font-weight:400;color:#aaa;text-transform:none;letter-spacing:0;">(up to 5, replaces existing gallery)</span>
+      </p>
+
+      <div
+        class="upload-zone"
+        id="uploadZone"
+        ondragover="event.preventDefault();this.classList.add('drag-over')"
+        ondragleave="this.classList.remove('drag-over')"
+        ondrop="handleDrop(event)"
+      >
+        <input
+          type="file"
+          name="listing[images]"
+          id="imageInput"
+          accept="image/*"
+          multiple
+          onchange="previewImages(this)"
+        />
+        <span class="upload-zone-icon">📸</span>
+        <p class="upload-zone-label">Click to upload or drag &amp; drop</p>
+        <p class="upload-zone-sub">PNG, JPG, WEBP · Max 5 photos · First photo becomes the main image</p>
+      </div>
+
+      <!-- New image previews -->
+      <div class="new-previews" id="newPreviews"></div>
+    </div>
+
+    <!-- ── Actions ── -->
+    <button type="submit" class="submit-btn">
+      ✅ Save Changes
+    </button>
+    <a href="/listings/<%= listing._id %>" class="cancel-link">Cancel — go back</a>
+
+  </form>
 </div>
+
+
+<script>
+  /* ── Category selector ── */
+  function selectCategory(val, el) {
+    document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('categoryInput').value = val;
+  }
+
+  /* ── Image preview ── */
+  let selectedFiles = [];
+
+  function previewImages(input) {
+    const files = Array.from(input.files).slice(0, 5);
+    selectedFiles = files;
+    renderPreviews();
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('uploadZone').classList.remove('drag-over');
+    const files = Array.from(e.dataTransfer.files)
+      .filter(f => f.type.startsWith('image/'))
+      .slice(0, 5);
+    selectedFiles = files;
+
+    // Update the file input (for form submission)
+    const dt = new DataTransfer();
+    files.forEach(f => dt.items.add(f));
+    document.getElementById('imageInput').files = dt.files;
+
+    renderPreviews();
+  }
+
+  function removePreview(idx) {
+    selectedFiles.splice(idx, 1);
+    // Rebuild DataTransfer
+    const dt = new DataTransfer();
+    selectedFiles.forEach(f => dt.items.add(f));
+    document.getElementById('imageInput').files = dt.files;
+    renderPreviews();
+  }
+
+  function renderPreviews() {
+    const container = document.getElementById('newPreviews');
+    container.innerHTML = '';
+    selectedFiles.forEach((file, idx) => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const item = document.createElement('div');
+        item.className = 'new-preview-item';
+        item.innerHTML = `
+          <img src="${e.target.result}" alt="preview ${idx+1}" />
+          ${idx === 0 ? '<span class="preview-badge">MAIN</span>' : ''}
+          <button type="button" class="new-preview-remove" onclick="removePreview(${idx})">✕</button>
+        `;
+        container.appendChild(item);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Update upload zone label
+    const label = document.querySelector('.upload-zone-label');
+    label.textContent = selectedFiles.length > 0
+      ? `${selectedFiles.length} photo${selectedFiles.length > 1 ? 's' : ''} selected — click to change`
+      : 'Click to upload or drag & drop';
+  }
+
+  /* ── Form validation ── */
+  document.getElementById('editForm').addEventListener('submit', function(e) {
+    const inputs = this.querySelectorAll('[required]');
+    let valid = true;
+    inputs.forEach(inp => {
+      if (!inp.value.trim()) {
+        inp.classList.add('invalid');
+        valid = false;
+      } else {
+        inp.classList.remove('invalid');
+      }
+    });
+    if (!valid) e.preventDefault();
+  });
+</script>
