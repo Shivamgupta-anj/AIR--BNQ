@@ -1,132 +1,627 @@
 <% layout("layout/boilerplate") %>
-<script>
-  // const mapToken = "<%= process.env.MAP_TOKEN %>";
-</script>
 
-<div class="row mt-3">
-  <div class="col-8 offset-3">
-    <h3><%= listing.title %></h3>
-  </div>
+<style>
+  /* ── Gallery ── */
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 220px 180px;
+    gap: 8px;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    height: 410px;
+  }
+  .gallery-main {
+    grid-row: 1 / 3;
+    position: relative;
+    overflow: hidden;
+  }
+  .gallery-main img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  .gallery-main:hover img { transform: scale(1.03); }
+  .gallery-thumbs {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    grid-row: 1 / 3;
+  }
+  .gallery-thumb {
+    overflow: hidden; position: relative; cursor: pointer;
+  }
+  .gallery-thumb img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  .gallery-thumb:hover img { transform: scale(1.05); }
+  .gallery-thumb.show-more { position: relative; }
+  .gallery-thumb.show-more::after {
+    content: attr(data-more);
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.45);
+    color: #fff; font-size: 16px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .gallery-overlay {
+    position: absolute; bottom: 1rem; left: 1rem;
+    background: rgba(255,255,255,0.15); color: #fff;
+    font-size: 12px; padding: 4px 14px; border-radius: 20px;
+    border: 0.5px solid rgba(255,255,255,0.35);
+    backdrop-filter: blur(4px);
+  }
+  .gallery-edit-btns {
+    position: absolute; top: 1rem; right: 1rem; display: flex; gap: 8px; z-index: 2;
+  }
 
-  <div class="card col-6 offset-3 show-card listing-card">
-    <img
-      src="<%= listing.image && listing.image.url
-        ? listing.image.url
-        : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994' %>"
-      class="card-img-top show-img"
-      alt="listing image"
-    />
+  /* ── Show page general ── */
+  .info-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #f5f5f5; border: 1px solid #eee;
+    border-radius: 20px; padding: 5px 14px;
+    font-size: 12px; color: #555;
+  }
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 2rem; align-items: start;
+  }
+  .section-card {
+    background: #f8f9fa; border-radius: 12px;
+    padding: 1.25rem; border: 0.5px solid #eee;
+    margin-bottom: 1.25rem;
+  }
 
-    <div class="card-body">
-      <!-- ✅ FIX: Guard against missing owner -->
-      <p class="card-text">
-        <i>Owned by : <%= listing.owner ? listing.owner.username : "Unknown" %></i>
-      </p>
-      <p class="card-text"><%= listing.description %><br /></p>
-      <p class="card-text">₹ <%= listing.price.toLocaleString("en-IN") %></p>
-      <p class="card-text"><%= listing.location %></p>
-      <p class="card-text"><%= listing.country %></p>
+  /* ── Category ratings ── */
+  .ratings-section {
+    margin-bottom: 1.5rem;
+  }
+  .ratings-overall {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 1.25rem;
+  }
+  .ratings-overall-score {
+    font-size: 48px; font-weight: 600; line-height: 1; color: #222;
+  }
+  .ratings-overall-label {
+    font-size: 13px; font-weight: 500; color: #222; margin-bottom: 2px;
+  }
+  .ratings-overall-count { font-size: 12px; color: #888; }
+  .ratings-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border: 0.5px solid #e0e0e0;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .rating-category {
+    padding: 1rem 1.1rem;
+    border-right: 0.5px solid #e0e0e0;
+    border-bottom: 0.5px solid #e0e0e0;
+  }
+  .rating-category:nth-child(3n) { border-right: none; }
+  .rating-category:nth-last-child(-n+3) { border-bottom: none; }
+  .rating-cat-name { font-size: 13px; color: #444; margin-bottom: 4px; }
+  .rating-cat-score { font-size: 18px; font-weight: 600; color: #222; margin-bottom: 8px; }
+  .rating-cat-bar {
+    height: 3px; background: #eee; border-radius: 2px; overflow: hidden;
+  }
+  .rating-cat-fill {
+    height: 100%; background: #222; border-radius: 2px;
+  }
+  .rating-cat-icon { font-size: 18px; margin-top: 8px; display: block; }
+
+  /* ── Booking card ── */
+  .booking-card {
+    background: #fff; border: 0.5px solid #ddd;
+    border-radius: 16px; padding: 1.25rem;
+    position: sticky; top: 80px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+  }
+  .date-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+  .date-box {
+    border: 0.5px solid #ddd; border-radius: 8px;
+    padding: 8px 10px; cursor: pointer;
+  }
+  .date-box.active { border-color: #085041; }
+  .date-box-label {
+    font-size: 10px; font-weight: 500;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    color: #888; margin-bottom: 2px;
+  }
+  .date-box-val { font-size: 13px; font-weight: 500; color: #222; }
+
+  /* ── Calendar ── */
+  .cal-header {
+    display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 0.75rem;
+  }
+  .cal-nav {
+    background: none; border: 0.5px solid #ddd;
+    border-radius: 6px; width: 28px; height: 28px;
+    cursor: pointer; font-size: 14px; color: #555;
+  }
+  .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; }
+  .cal-day-label {
+    font-size: 10px; color: #888; text-align: center;
+    padding: 4px 0; font-weight: 500;
+  }
+  .cal-day {
+    font-size: 12px; text-align: center;
+    padding: 6px 2px; border-radius: 6px;
+    cursor: pointer; color: #222; transition: background 0.15s;
+  }
+  .cal-day:hover:not(.disabled):not(.empty) { background: #f0f0f0; }
+  .cal-day.selected { background: #085041; color: #9FE1CB; font-weight: 500; }
+  .cal-day.in-range { background: #E1F5EE; color: #085041; }
+  .cal-day.disabled { color: #ccc; cursor: not-allowed; }
+  .cal-day.empty { cursor: default; }
+
+  /* ── Amenities ── */
+  .amenity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 1.25rem; }
+  .amenity-item { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #333; }
+  .amenity-item.unavail { color: #aaa; text-decoration: line-through; }
+  .amenity-icon { font-size: 16px; width: 22px; text-align: center; }
+
+  /* ── Reviews ── */
+  .review-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #E1F5EE; color: #085041;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 500; flex-shrink: 0;
+  }
+  .review-card {
+    background: #fff; border: 0.5px solid #e5e5e5;
+    border-radius: 12px; padding: 1rem;
+  }
+  .form-label-upper {
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    color: #666; display: block; margin-bottom: 6px;
+  }
+
+  @media(max-width: 768px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .booking-card { position: static; }
+    .gallery-grid { grid-template-columns: 1fr; height: auto; }
+    .gallery-main { grid-row: auto; height: 240px; }
+    .gallery-thumbs { grid-template-columns: repeat(2,1fr); grid-template-rows: 120px 120px; }
+    .ratings-grid { grid-template-columns: repeat(2,1fr); }
+    .rating-category:nth-child(2n) { border-right: none; }
+    .rating-category:nth-child(3n) { border-right: 0.5px solid #e0e0e0; }
+  }
+</style>
+
+<div class="container" style="max-width:920px;padding:1.5rem 1rem;">
+
+  <!-- ── Multi-image Gallery ── -->
+  <%
+    /* 
+      In your listing model, add an `images` array field (array of {url, filename}).
+      The first image is the hero; images[1..4] are thumbnails.
+      Falls back to listing.image.url if no images array exists.
+    */
+    const imgs = (listing.images && listing.images.length > 0)
+      ? listing.images.map(i => i.url)
+      : [listing.image && listing.image.url
+          ? listing.image.url
+          : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994'];
+
+    const mainImg  = imgs[0];
+    const thumbs   = imgs.slice(1, 5);          /* up to 4 thumbs */
+    const extraCnt = imgs.length > 5 ? imgs.length - 5 : 0;
+  %>
+
+  <div class="gallery-grid" style="position:relative;">
+
+    <!-- Big left image -->
+    <div class="gallery-main">
+      <img src="<%= mainImg %>" alt="main listing image" />
+      <div class="gallery-overlay">📍 <%= listing.location %>, <%= listing.country %></div>
     </div>
-  </div>
-</div>
 
-<!-- Edit / Delete buttons (only for owner) -->
-<% if(currentUser && listing.owner && listing.owner._id.equals(currentUser._id)){ %>
-<div class="btns">
-  <a
-    href="/listings/<%= listing._id %>/edit"
-    class="btn btn-dark col-1 offset-3 edit-btn"
-  >
-    Edit Listing
-  </a>
+    <!-- 4 small thumbs on the right -->
+    <div class="gallery-thumbs">
+      <% for(let i = 0; i < 4; i++) { %>
+        <% if(thumbs[i]) { %>
+          <div class="gallery-thumb <%= (i === 3 && extraCnt > 0) ? 'show-more' : '' %>"
+               <%= (i === 3 && extraCnt > 0) ? `data-more="+${extraCnt} photos"` : '' %>>
+            <img src="<%= thumbs[i] %>" alt="listing photo <%= i+2 %>" />
+          </div>
+        <% } else { %>
+          <!-- placeholder if fewer than 5 images -->
+          <div class="gallery-thumb" style="background:#f0f0f0;display:flex;align-items:center;justify-content:center;">
+            <span style="font-size:22px;color:#ccc;">🖼</span>
+          </div>
+        <% } %>
+      <% } %>
+    </div>
 
-  <form action="/listings/<%= listing._id %>?_method=DELETE" method="POST">
-    <button class="btn btn-dark offset-5">Delete</button>
-  </form>
-</div>
-<% } %>
+    <!-- Edit / Delete buttons (owner only) -->
+    <% if(currentUser && listing.owner && listing.owner._id.equals(currentUser._id)){ %>
+    <div class="gallery-edit-btns">
+      <a href="/listings/<%= listing._id %>/edit"
+        style="background:rgba(255,255,255,0.92);border:none;border-radius:20px;padding:6px 16px;font-size:12px;font-weight:500;color:#222;text-decoration:none;box-shadow:0 1px 6px rgba(0,0,0,0.12);">
+        ✏ Edit
+      </a>
+      <form action="/listings/<%= listing._id %>?_method=DELETE" method="POST" style="margin:0;">
+        <button style="background:rgba(220,53,69,0.88);border:none;border-radius:20px;padding:6px 16px;font-size:12px;font-weight:500;color:#fff;cursor:pointer;box-shadow:0 1px 6px rgba(0,0,0,0.15);">
+          🗑 Delete
+        </button>
+      </form>
+    </div>
+    <% } %>
+
+  </div><!-- /gallery-grid -->
 
 
-<!-- Reviews Form -->
-<div class="col-8 offset-3 mb-3">
+  <div class="main-grid">
 
-  <% if(currentUser){ %>
-    <hr>
-    <h4>Leave a Review</h4>
-    <form action="/listings/<%= listing._id %>/reviews" method="POST" novalidate class="needs-validation">
+    <!-- ════ LEFT ════ -->
+    <div>
 
-      <!-- Star Rating -->
-      <div class="mb-3 mt-3">
-        <label for="rating" class="form-label">Rating</label>
-
-        <fieldset class="starability-slot">
-          <input type="radio" id="no-rate" class="input-no-rate" name="review[rating]" value="1" checked aria-label="No rating." />
-          <input type="radio" id="first-rate1" name="review[rating]" value="1" />
-          <label for="first-rate1" title="Terrible">1 star</label>
-          <input type="radio" id="first-rate2" name="review[rating]" value="2" />
-          <label for="first-rate2" title="Not good">2 stars</label>
-          <input type="radio" id="first-rate3" name="review[rating]" value="3" />
-          <label for="first-rate3" title="Average">3 stars</label>
-          <input type="radio" id="first-rate4" name="review[rating]" value="4" />
-          <label for="first-rate4" title="Very good">4 stars</label>
-          <input type="radio" id="first-rate5" name="review[rating]" value="5" />
-          <label for="first-rate5" title="Amazing">5 stars</label>
-        </fieldset>
+      <!-- Title + Price -->
+      <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+          <h2 style="font-size:22px;font-weight:500;margin:0 0 4px;"><%= listing.title %></h2>
+          <p style="font-size:13px;color:#666;margin:0;">Owned by
+            <span style="color:#0F6E56;font-weight:500;">@<%= listing.owner ? listing.owner.username : "Unknown" %></span>
+          </p>
+        </div>
+        <div class="text-end">
+          <p style="font-size:22px;font-weight:500;margin:0;">₹<%= listing.price.toLocaleString("en-IN") %></p>
+          <p style="font-size:12px;color:#888;margin:0;">per night</p>
+        </div>
       </div>
 
-      <!-- Comment -->
-      <div class="mb-3 mt-3">
-        <label for="comment" class="form-label">Feedback</label>
-        <br>
-        <textarea
-          name="review[comment]"
-          id="comment"
-          cols="30"
-          rows="5"
-          class="form-control"
-          required
-        ></textarea>
-        <div class="invalid-feedback">Please enter some Feedback</div>
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        <span class="info-pill">📍 <%= listing.location %></span>
+        <span class="info-pill">🌏 <%= listing.country %></span>
+        <span class="info-pill">⭐ 4.8 · <%= listing.reviews.length %> reviews</span>
       </div>
 
-      <button class="btn btn-outline-dark">Submit</button>
-    </form>
-    <hr>
-  <% } %>
+      <div class="section-card">
+        <p style="font-size:14px;line-height:1.75;color:#333;margin:0;"><%= listing.description %></p>
+      </div>
 
+      <hr style="border:none;border-top:0.5px solid #eee;margin:1.25rem 0;">
 
-  <!-- All Reviews -->
-  <% if(listing.reviews.length > 0) { %>
-    <div class="row">
-      <p><b>All Reviews</b></p>
+      <!-- ── Category Ratings (Airbnb-style) ── -->
+      <div class="ratings-section">
+        <h5 style="font-size:15px;font-weight:500;margin-bottom:1rem;">
+          ⭐ 4.93 · How guests rated this place
+        </h5>
 
-      <% for(let review of listing.reviews){ %>
-        <div class="card col-5 ms-3 mb-3">
-          <div class="card-body">
+        <div class="ratings-grid">
 
-            <!-- ✅ FIX: Guard against missing review author -->
-            <h5 class="card-title">
-              @<%= review.author ? review.author.username : "Unknown" %>
-            </h5>
-
-            <p class="starability-result card-text" data-rating="<%= review.rating %>">
-              <%= review.rating %>
-            </p>
-            <p class="card-text"><%= review.comment %></p>
-
+          <div class="rating-category">
+            <p class="rating-cat-name">Cleanliness</p>
+            <p class="rating-cat-score">4.9</p>
+            <div class="rating-cat-bar"><div class="rating-cat-fill" style="width:98%"></div></div>
+            <span class="rating-cat-icon">🧹</span>
           </div>
 
-          <!-- ✅ FIX: Only show delete button if currentUser is the review author -->
-          <% if(currentUser && review.author && review.author._id.equals(currentUser._id)){ %>
-            <form action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE" class="mb-3" method="POST">
-              <button class="btn btn-sm btn-dark">Delete</button>
-            </form>
-          <% } %>
+          <div class="rating-category">
+            <p class="rating-cat-name">Accuracy</p>
+            <p class="rating-cat-score">5.0</p>
+            <div class="rating-cat-bar"><div class="rating-cat-fill" style="width:100%"></div></div>
+            <span class="rating-cat-icon">✅</span>
+          </div>
+
+          <div class="rating-category">
+            <p class="rating-cat-name">Check-in</p>
+            <p class="rating-cat-score">5.0</p>
+            <div class="rating-cat-bar"><div class="rating-cat-fill" style="width:100%"></div></div>
+            <span class="rating-cat-icon">🔑</span>
+          </div>
+
+          <div class="rating-category">
+            <p class="rating-cat-name">Communication</p>
+            <p class="rating-cat-score">5.0</p>
+            <div class="rating-cat-bar"><div class="rating-cat-fill" style="width:100%"></div></div>
+            <span class="rating-cat-icon">💬</span>
+          </div>
+
+          <div class="rating-category">
+            <p class="rating-cat-name">Location</p>
+            <p class="rating-cat-score">4.9</p>
+            <div class="rating-cat-bar"><div class="rating-cat-fill" style="width:98%"></div></div>
+            <span class="rating-cat-icon">📍</span>
+          </div>
+
+          <div class="rating-category">
+            <p class="rating-cat-name">Value</p>
+            <p class="rating-cat-score">4.9</p>
+            <div class="rating-cat-bar"><div class="rating-cat-fill" style="width:98%"></div></div>
+            <span class="rating-cat-icon">💰</span>
+          </div>
 
         </div>
+      </div>
+
+      <hr style="border:none;border-top:0.5px solid #eee;margin:1.25rem 0;">
+
+      <!-- ── Amenities ── -->
+      <h5 style="font-size:15px;font-weight:500;margin-bottom:1rem;">What this place offers</h5>
+      <div class="amenity-grid">
+        <div class="amenity-item"><span class="amenity-icon">🍳</span> Kitchen</div>
+        <div class="amenity-item"><span class="amenity-icon">📶</span> Wifi</div>
+        <div class="amenity-item"><span class="amenity-icon">💼</span> Dedicated workspace</div>
+        <div class="amenity-item"><span class="amenity-icon">🅿️</span> Free parking on premises</div>
+        <div class="amenity-item"><span class="amenity-icon">📺</span> TV</div>
+        <div class="amenity-item"><span class="amenity-icon">❄️</span> Air conditioning</div>
+        <div class="amenity-item"><span class="amenity-icon">🛏</span> Cot</div>
+        <div class="amenity-item"><span class="amenity-icon">📷</span> Exterior security cameras</div>
+        <div class="amenity-item unavail"><span class="amenity-icon">🚨</span> Carbon monoxide alarm</div>
+        <div class="amenity-item unavail"><span class="amenity-icon">🔥</span> Smoke alarm</div>
+      </div>
+
+      <hr style="border:none;border-top:0.5px solid #eee;margin:1.25rem 0;">
+
+      <!-- ── Review Form ── -->
+      <% if(currentUser){ %>
+      <h5 style="font-size:15px;font-weight:500;margin-bottom:1rem;">Leave a Review</h5>
+      <div style="background:#fff;border:0.5px solid #e5e5e5;border-radius:12px;padding:1.25rem;margin-bottom:1.25rem;">
+        <form action="/listings/<%= listing._id %>/reviews" method="POST" novalidate class="needs-validation">
+          <div class="mb-3">
+            <label class="form-label-upper">Rating</label>
+            <input type="hidden" name="review[rating]" id="ratingInput" value="1" />
+            <div id="starPicker" style="display:flex;align-items:center;gap:6px;margin-top:6px;">
+              <svg class="star-btn" data-val="1" width="28" height="28" viewBox="0 0 24 24" fill="#e0e0e0" style="cursor:pointer;transition:transform 0.1s,fill 0.15s;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="star-btn" data-val="2" width="28" height="28" viewBox="0 0 24 24" fill="#e0e0e0" style="cursor:pointer;transition:transform 0.1s,fill 0.15s;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="star-btn" data-val="3" width="28" height="28" viewBox="0 0 24 24" fill="#e0e0e0" style="cursor:pointer;transition:transform 0.1s,fill 0.15s;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="star-btn" data-val="4" width="28" height="28" viewBox="0 0 24 24" fill="#e0e0e0" style="cursor:pointer;transition:transform 0.1s,fill 0.15s;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="star-btn" data-val="5" width="28" height="28" viewBox="0 0 24 24" fill="#e0e0e0" style="cursor:pointer;transition:transform 0.1s,fill 0.15s;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <span id="ratingLabel" style="font-size:12px;color:#888;margin-left:4px;">Select rating</span>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="comment" class="form-label-upper">Your Feedback</label>
+            <textarea name="review[comment]" id="comment" rows="3" class="form-control"
+              placeholder="Share your experience..." required
+              style="border-radius:8px;font-size:14px;background:#f8f9fa;"></textarea>
+            <div class="invalid-feedback">Please enter some feedback.</div>
+          </div>
+          <button class="btn" style="background:#085041;color:#9FE1CB;font-size:13px;font-weight:500;padding:9px 20px;border-radius:8px;">
+            Submit Review
+          </button>
+        </form>
+      </div>
+      <hr style="border:none;border-top:0.5px solid #eee;margin-bottom:1.25rem;">
       <% } %>
 
-    </div>
-  <% } %>
+      <!-- ── All Reviews ── -->
+      <% if(listing.reviews.length > 0){ %>
+      <h5 style="font-size:15px;font-weight:500;margin-bottom:1rem;">All Reviews</h5>
+      <div class="row row-cols-1 row-cols-md-2 g-3">
+        <% for(let review of listing.reviews){ %>
+        <div class="col">
+          <div class="review-card h-100">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <div class="review-avatar">
+                <%= review.author ? review.author.username[0].toUpperCase() : "?" %>
+              </div>
+              <div>
+                <p style="font-size:13px;font-weight:500;margin:0;">@<%= review.author ? review.author.username : "Unknown" %></p>
+                <div style="display:flex;align-items:center;gap:3px;margin-top:2px;">
+                  <% for(let s = 1; s <= 5; s++) { %>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="<%= s <= review.rating ? '#f5a623' : '#e0e0e0' %>" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                  <% } %>
+                  <span style="font-size:11px;color:#888;margin-left:4px;"><%= review.rating %>.0</span>
+                </div>
+              </div>
+            </div>
+            <p style="font-size:13px;color:#555;margin:0;line-height:1.6;"><%= review.comment %></p>
+            <% if(currentUser && review.author && review.author._id.equals(currentUser._id)){ %>
+            <form action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE" method="POST" class="mt-2">
+              <button class="btn btn-sm" style="border:0.5px solid #f5c6cb;color:#842029;background:transparent;font-size:11px;border-radius:6px;padding:3px 10px;">
+                Delete
+              </button>
+            </form>
+            <% } %>
+          </div>
+        </div>
+        <% } %>
+      </div>
+      <% } %>
 
+    </div><!-- /left -->
+
+
+    <!-- ════ RIGHT: Booking Card ════ -->
+    <div>
+      <div class="booking-card">
+        <p style="font-size:18px;font-weight:500;margin-bottom:4px;">
+          ₹<%= listing.price.toLocaleString("en-IN") %>
+          <span style="font-size:13px;font-weight:400;color:#888;">/ night</span>
+        </p>
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:1rem;">
+          <span style="color:#f5a623;">★</span>
+          <span style="font-size:13px;font-weight:500;">4.8</span>
+          <span style="font-size:12px;color:#888;">· <%= listing.reviews.length %> reviews</span>
+        </div>
+
+        <div class="date-inputs">
+          <div class="date-box active" id="checkinBox">
+            <div class="date-box-label">Check-in</div>
+            <div class="date-box-val" id="checkinVal">Add date</div>
+          </div>
+          <div class="date-box" id="checkoutBox">
+            <div class="date-box-label">Check-out</div>
+            <div class="date-box-val" id="checkoutVal">Add date</div>
+          </div>
+        </div>
+
+        <!-- Calendar -->
+        <div style="margin-bottom:1rem;">
+          <div class="cal-header">
+            <button class="cal-nav" id="prevBtn">‹</button>
+            <span style="font-size:13px;font-weight:500;" id="calTitle"></span>
+            <button class="cal-nav" id="nextBtn">›</button>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+
+        <!-- Price Breakdown -->
+        <div id="priceBreakdown" style="display:none;border-top:0.5px solid #eee;padding-top:12px;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#666;margin-bottom:6px;">
+            <span id="nightsLabel">₹<%= listing.price.toLocaleString("en-IN") %> × nights</span>
+            <span id="nightsTotal"></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#666;margin-bottom:6px;">
+            <span>Cleaning fee</span><span>₹800</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#666;margin-bottom:8px;">
+            <span>Service fee</span><span>₹1,200</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:500;border-top:0.5px solid #eee;padding-top:10px;">
+            <span>Total</span><span id="grandTotal"></span>
+          </div>
+        </div>
+
+        <button id="reserveBtn" onclick="goToBooking()" style="width:100%;background:#085041;color:#9FE1CB;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:500;cursor:pointer;transition:opacity 0.2s;">
+          Reserve
+        </button>
+        <p style="text-align:center;font-size:11px;color:#888;margin-top:8px;margin-bottom:0;">You won't be charged yet</p>
+      </div>
+    </div>
+
+  </div><!-- /main-grid -->
 </div>
+
+
+<script>
+  const PRICE = <%= listing.price %>;
+  const CLEANING = 800, SERVICE = 1200;
+  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const dayLabels = ["Su","Mo","Tu","We","Th","Fr","Sa"];
+  const today = new Date();
+  let viewYear = today.getFullYear(), viewMonth = today.getMonth();
+  let checkIn = null, checkOut = null, selecting = "in";
+
+  function fmt(d) {
+    return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  }
+  function sameDay(a, b) {
+    return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+  }
+
+  function renderCal() {
+    document.getElementById("calTitle").textContent = months[viewMonth] + " " + viewYear;
+    const grid = document.getElementById("calGrid");
+    grid.innerHTML = "";
+    dayLabels.forEach(d => {
+      const el = document.createElement("div");
+      el.className = "cal-day-label"; el.textContent = d; grid.appendChild(el);
+    });
+    const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+    const totalDays = new Date(viewYear, viewMonth + 1, 0).getDate();
+    for (let i = 0; i < firstDay; i++) {
+      const el = document.createElement("div"); el.className = "cal-day empty"; grid.appendChild(el);
+    }
+    for (let d = 1; d <= totalDays; d++) {
+      const el = document.createElement("div");
+      el.className = "cal-day"; el.textContent = d;
+      const thisDate = new Date(viewYear, viewMonth, d);
+      const todayClean = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      if (thisDate < todayClean) { el.classList.add("disabled"); }
+      else {
+        if (checkIn && sameDay(thisDate, checkIn)) el.classList.add("selected");
+        else if (checkOut && sameDay(thisDate, checkOut)) el.classList.add("selected");
+        else if (checkIn && checkOut && thisDate > checkIn && thisDate < checkOut) el.classList.add("in-range");
+        el.addEventListener("click", () => pickDate(new Date(viewYear, viewMonth, d)));
+      }
+      grid.appendChild(el);
+    }
+  }
+
+  function pickDate(d) {
+    if (selecting === "in" || (checkIn && checkOut) || (checkIn && d <= checkIn)) {
+      checkIn = d; checkOut = null; selecting = "out";
+    } else {
+      checkOut = d; selecting = "in";
+    }
+    document.getElementById("checkinVal").textContent  = checkIn  ? fmt(checkIn)  : "Add date";
+    document.getElementById("checkoutVal").textContent = checkOut ? fmt(checkOut) : "Add date";
+    document.getElementById("checkinBox").classList.toggle("active", true);
+    document.getElementById("checkoutBox").classList.toggle("active", !!checkOut);
+    updatePrice(); renderCal();
+  }
+
+  function updatePrice() {
+    const pb = document.getElementById("priceBreakdown");
+    if (checkIn && checkOut && checkOut > checkIn) {
+      const nights = Math.round((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+      const sub = PRICE * nights;
+      const total = sub + CLEANING + SERVICE;
+      document.getElementById("nightsLabel").textContent = "₹" + PRICE.toLocaleString("en-IN") + " × " + nights + " night" + (nights > 1 ? "s" : "");
+      document.getElementById("nightsTotal").textContent = "₹" + sub.toLocaleString("en-IN");
+      document.getElementById("grandTotal").textContent  = "₹" + total.toLocaleString("en-IN");
+      pb.style.display = "block";
+      document.getElementById("reserveBtn").textContent = "Reserve · ₹" + total.toLocaleString("en-IN");
+    } else {
+      pb.style.display = "none";
+      document.getElementById("reserveBtn").textContent = "Reserve";
+    }
+  }
+
+  document.getElementById("prevBtn").addEventListener("click", () => {
+    viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; } renderCal();
+  });
+  document.getElementById("nextBtn").addEventListener("click", () => {
+    viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; } renderCal();
+  });
+  renderCal();
+
+  /* ── Reserve button → booking page ── */
+  function goToBooking() {
+    if (!checkIn || !checkOut) {
+      alert('Please select your check-in and check-out dates first.');
+      return;
+    }
+    const fmt = d => d.toISOString().split('T')[0];
+    window.location.href = '/listings/<%= listing._id %>/booking?checkin=' + fmt(checkIn) + '&checkout=' + fmt(checkOut);
+  }
+
+  /* ── Star picker (review form) ── */
+  const labels = ["", "Terrible", "Not good", "Average", "Very good", "Amazing"];
+  const stars = document.querySelectorAll(".star-btn");
+  const ratingInput = document.getElementById("ratingInput");
+  const ratingLabel = document.getElementById("ratingLabel");
+  let selectedRating = 1;
+
+  function paintStars(hovered) {
+    stars.forEach(s => {
+      const v = parseInt(s.getAttribute("data-val"));
+      s.setAttribute("fill", v <= hovered ? "#f5a623" : "#e0e0e0");
+      s.style.transform = v <= hovered ? "scale(1.15)" : "scale(1)";
+    });
+  }
+
+  stars.forEach(star => {
+    star.addEventListener("mouseenter", () => {
+      const v = parseInt(star.getAttribute("data-val"));
+      paintStars(v);
+      ratingLabel.textContent = labels[v];
+    });
+    star.addEventListener("mouseleave", () => {
+      paintStars(selectedRating);
+      ratingLabel.textContent = labels[selectedRating];
+    });
+    star.addEventListener("click", () => {
+      selectedRating = parseInt(star.getAttribute("data-val"));
+      ratingInput.value = selectedRating;
+      paintStars(selectedRating);
+      ratingLabel.textContent = labels[selectedRating];
+    });
+  });
+
+  /* initialise to 1 star */
+  paintStars(1);
+  ratingLabel.textContent = labels[1];
+</script>

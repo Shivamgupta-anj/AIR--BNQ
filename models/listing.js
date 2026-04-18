@@ -1,8 +1,61 @@
+// const mongoose = require("mongoose");
+// const Review = require("./review");
+// const Schema = mongoose.Schema;
+
+// // ✅ Correct name
+// const listingSchema = new Schema({
+//   title: {
+//     type: String,
+//     required: true,
+//   },
+//   description: String,
+//   price: Number,
+//   location: String,
+//   image: {
+//     // filename: String,
+//     // url: {
+//     //   type: String,
+//     //   default:
+//     //     "https://images.unsplash.com/photo-1717538836473-7925f9ea6744?q=80&w=1160&auto=format&fit=crop",
+//     // },
+//     url : String,
+//     filename: String,
+//   },
+//   country: String,
+
+//   // ✅ Use plural (recommended)
+//   reviews: [
+//     {
+//       type: Schema.Types.ObjectId,
+//       ref: "Review",
+//     },
+//   ],
+//   owner: {
+//   type: Schema.Types.ObjectId,
+//   ref: "User",
+// }
+// });
+
+
+// // ✅ CASCADE DELETE MIDDLEWARE
+// listingSchema.post("findOneAndDelete", async (listing) => {
+//   if (listing) {
+//     await Review.deleteMany({
+//       _id: { $in: listing.reviews },
+//     });
+//   }
+// });
+
+
+// // ✅ Create model
+// const Listing = mongoose.model("Listing", listingSchema);
+
+// module.exports = Listing;
+
 const mongoose = require("mongoose");
 const Review = require("./review");
 const Schema = mongoose.Schema;
 
-// ✅ Correct name
 const listingSchema = new Schema({
   title: {
     type: String,
@@ -12,18 +65,18 @@ const listingSchema = new Schema({
   price: Number,
   location: String,
   image: {
-    // filename: String,
-    // url: {
-    //   type: String,
-    //   default:
-    //     "https://images.unsplash.com/photo-1717538836473-7925f9ea6744?q=80&w=1160&auto=format&fit=crop",
-    // },
-    url : String,
+    url: String,
     filename: String,
   },
   country: String,
 
-  // ✅ Use plural (recommended)
+  // ✅ ADD THIS
+  category: {
+    type: String,
+    enum: ["Trending", "Rooms", "Cities", "Pools", "Beach", "LakeFront", "Castles", "Farms", "Arctic", "Domes", "Boats"],
+    default: "Trending",
+  },
+
   reviews: [
     {
       type: Schema.Types.ObjectId,
@@ -31,11 +84,10 @@ const listingSchema = new Schema({
     },
   ],
   owner: {
-  type: Schema.Types.ObjectId,
-  ref: "User",
-}
+    type: Schema.Types.ObjectId,
+    ref: "User",
+  },
 });
-
 
 // ✅ CASCADE DELETE MIDDLEWARE
 listingSchema.post("findOneAndDelete", async (listing) => {
@@ -46,8 +98,6 @@ listingSchema.post("findOneAndDelete", async (listing) => {
   }
 });
 
-
-// ✅ Create model
 const Listing = mongoose.model("Listing", listingSchema);
 
 module.exports = Listing;

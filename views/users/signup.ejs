@@ -1,52 +1,136 @@
 <% layout("/layout/boilerplate") %>
 
-<div class="row mt-3">
-    <h1 class="col-6 offset-3">Sign up on WanderLust</h1>
-    <div class="col-6 offset-3">
-        <form action="/signup" method="post" class="needs-validation" novalidate> 
-            <!-- for username -->
+<style>
+  .signup-wrapper {
+    display: flex;
+    min-height: 88vh;
+    align-items: stretch;
+  }
+  .signup-left {
+    flex: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 2.5rem;
+    overflow: hidden;
+  }
+  .signup-left img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .signup-left-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(4,52,44,0.92) 0%, rgba(4,52,44,0.3) 60%, transparent 100%);
+  }
+  .signup-left-content {
+    position: relative;
+  }
+  .signup-right {
+    width: 420px;
+    flex-shrink: 0;
+    background: #fff;
+    padding: 3rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .signup-right .form-control {
+    background: #f8f8f8;
+    border: 0.5px solid #ddd;
+    font-size: 14px;
+  }
+  .signup-right .form-label {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #666;
+  }
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 1.25rem 0;
+  }
+  .divider hr {
+    flex: 1;
+    border: none;
+    border-top: 0.5px solid #e0e0e0;
+    margin: 0;
+  }
+  @media (max-width: 768px) {
+    .signup-left { display: none; }
+    .signup-right { width: 100%; }
+  }
+</style>
 
-            <div class="mb-3">
-            <label for="username" class="form-label">Username</label>
-            <input
-            class="form-control"
-            type="text"
-            name="username"
-            id="username"
-            required
-            />
-          <div class="valid-feedback">Username Looks Good!</div>
-          <div class="invalid-feedback">Enter Username</div>
-        </div>
+<div class="signup-wrapper">
 
-<!-- for email -->
-
-        <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
-            <input
-                class="form-control"
-                type="email"
-                name="email"
-                id="email"
-                required
-            />
-           
-        </div>
-        <!-- for password -->
-
-        <div class="mb-3">
-            <label for="password" class="form-label">Password</label>
-            <input
-                class="form-control"
-                type="password"
-                name="password"
-                id="password"
-                required
-            />
-            
-        </div>
-        <button class="btn btn-success">SignUp</button>
-
-        </form>
+  <!-- Left: Photo panel -->
+  <div class="signup-left">
+    <img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&auto=format&fit=crop&q=80" alt="nature">
+    <div class="signup-left-overlay"></div>
+    <div class="signup-left-content">
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="fa-solid fa-house" style="color:#5DCAA5;font-size:18px;"></i>
+        <span style="color:#9FE1CB;font-size:16px;font-weight:500;letter-spacing:0.04em">WanderLust</span>
+      </div>
+      <h2 style="color:#fff;font-weight:500;margin-bottom:6px;">Find your next<br>adventure</h2>
+      <p style="color:#9FE1CB;font-size:14px;margin:0;">Thousands of stays worldwide</p>
     </div>
+  </div>
+
+  <!-- Right: Form panel -->
+  <div class="signup-right">
+
+    <p style="font-size:11px;font-weight:500;letter-spacing:0.1em;color:#1D9E75;margin-bottom:4px;text-transform:uppercase;">Get started</p>
+    <h3 style="font-weight:500;margin-bottom:4px;">Create account</h3>
+    <p class="text-muted mb-4" style="font-size:13px;">Join WanderLust for free</p>
+
+    <form action="/signup" method="post" class="needs-validation" novalidate>
+
+      <div class="mb-3">
+        <label for="username" class="form-label">Username</label>
+        <input class="form-control" type="text" name="username" id="username"
+          placeholder="e.g. traveller_99" required />
+        <div class="valid-feedback">Looks good!</div>
+        <div class="invalid-feedback">Please enter a username.</div>
+      </div>
+
+      <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input class="form-control" type="email" name="email" id="email"
+          placeholder="you@example.com" required />
+        <div class="invalid-feedback">Please enter a valid email.</div>
+      </div>
+
+      <div class="mb-4">
+        <label for="password" class="form-label">Password</label>
+        <input class="form-control" type="password" name="password" id="password"
+          placeholder="Min. 8 characters" required />
+        <div class="invalid-feedback">Please enter a password.</div>
+      </div>
+
+      <button type="submit" class="btn w-100"
+        style="background:#085041;color:#9FE1CB;font-size:14px;font-weight:500;padding:11px;border-radius:8px;letter-spacing:0.02em;">
+        Create my account
+      </button>
+
+    </form>
+
+    <div class="divider">
+      <hr/><span style="font-size:12px;color:#aaa;">or</span><hr/>
+    </div>
+
+    <p class="text-center mb-0" style="font-size:13px;color:#666;">
+      Already a member?
+      <a href="/login" style="color:#0F6E56;font-weight:500;text-decoration:none;">Log in</a>
+    </p>
+
+  </div>
 </div>
