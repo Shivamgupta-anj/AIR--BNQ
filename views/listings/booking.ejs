@@ -609,10 +609,11 @@
 
   </div><!-- /booking-grid -->
 </div>
+</body>
 
 
 <script>
-  const PRICE    = <%= listing.price %>;
+  const PRICE = Number("<%= listing.price || 0 %>");
   const CLEANING = 800;
   const SERVICE  = 1200;
 

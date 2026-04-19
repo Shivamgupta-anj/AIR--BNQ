@@ -222,11 +222,8 @@ const Listing = require("../models/listing");
 
 module.exports.index = async (req, res) => {
   const { category } = req.query;
-
   let filter = {};
-  if (category) {
-    filter.category = category;
-  }
+  if (category) filter.category = category;
 
   const allListings = await Listing.find(filter);
   res.render("listings/index", {
@@ -251,7 +248,6 @@ module.exports.showListing = async (req, res) => {
   res.render("listings/show", { listing });
 };
 
-// ── NEW: Booking page ──────────────────────────────────────────────────────
 module.exports.showBooking = async (req, res) => {
   const { id } = req.params;
   const listing = await Listing.findById(id).populate("owner");
@@ -261,18 +257,22 @@ module.exports.showBooking = async (req, res) => {
   }
   res.render("listings/booking", { listing });
 };
-// ──────────────────────────────────────────────────────────────────────────
 
 module.exports.createListing = async (req, res) => {
-  let url = req.file.path;
-  let filename = req.file.filename;
-
   const newListing = new Listing(req.body.listing);
   newListing.owner = req.user._id;
-  newListing.image = { url, filename };
+
+  // Handle multiple uploaded files
+  if (req.files && req.files.length > 0) {
+    newListing.images = req.files.map(f => ({
+      url: f.path,
+      filename: f.filename,
+    }));
+  }
+
   await newListing.save();
   req.flash("success", "New Listing created successfully");
-  res.redirect(`/listings`);
+  res.redirect(`/listings/${newListing._id}`);
 };
 
 module.exports.renderEditForm = async (req, res) => {
@@ -282,20 +282,27 @@ module.exports.renderEditForm = async (req, res) => {
     req.flash("error", "Listing not found");
     return res.redirect("/listings");
   }
-  let originalImageUrl = listing.image.url;
-  originalImageUrl = originalImageUrl.replace("/upload", "/upload/h_300,w_250");
+  let originalImageUrl = listing.images[0]?.url || "";
+  if (originalImageUrl) {
+    originalImageUrl = originalImageUrl.replace("/upload", "/upload/h_300,w_250");
+  }
   res.render("listings/edit", { listing, originalImageUrl });
 };
 
 module.exports.updateListing = async (req, res) => {
   let { id } = req.params;
-  let listing = await Listing.findByIdAndUpdate(id, req.body.listing);
-  if (typeof req.file !== "undefined") {
-    let url = req.file.path;
-    let filename = req.file.filename;
-    listing.image = { url, filename };
+  let listing = await Listing.findByIdAndUpdate(id, req.body.listing, { new: true });
+
+  // Add new uploaded files if any
+  if (req.files && req.files.length > 0) {
+    const newImages = req.files.map(f => ({
+      url: f.path,
+      filename: f.filename,
+    }));
+    listing.images.push(...newImages);
     await listing.save();
   }
+
   req.flash("success", "Listing updated successfully");
   res.redirect(`/listings/${id}`);
 };
