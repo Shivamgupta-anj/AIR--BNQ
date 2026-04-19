@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router({mergeParams: true}); //mergeParams is used to access the params from the parent route in the child route
-const wrapAsync = require("../utils/wrapAsync.js");
+const wrapAsync = require("../utils/WrapAsync.js");
 const ExpressError = require("../utils/ExpressError.js");
 
 const Review = require("../models/review.js");
